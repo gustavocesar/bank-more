@@ -3,6 +3,7 @@ using ContaCorrente.API.Contracts;
 using ContaCorrente.API.Idempotency;
 using ContaCorrente.Application.Commands.CriarContaCorrente;
 using ContaCorrente.Application.Commands.InativarContaCorrente;
+using ContaCorrente.Application.Commands.MovimentarContaCorrente;
 using ContaCorrente.Application.Queries.ObterContaCorrentePorId;
 using ContaCorrente.Application.Queries.ObterContaCorrentePorNumero;
 using MediatR;
@@ -17,6 +18,7 @@ internal static class ContaCorrenteEndpoints
         CriarContaCorrente(app);
         ObterContaCorrentePorId(app);
         ObterContaCorrentePorNumero(app);
+        MovimentarContaCorrente(app);
         InativarContaCorrente(app);
     }
 
@@ -114,6 +116,45 @@ internal static class ContaCorrenteEndpoints
         .Produces<ObterContaCorrenteHttpResponse>(StatusCodes.Status200OK)
         .Produces<FalhaResponse>(StatusCodes.Status400BadRequest)
         .Produces<FalhaResponse>(StatusCodes.Status404NotFound)
+        .Produces(StatusCodes.Status403Forbidden)
+        .RequireAuthorization();
+    }
+
+    private static void MovimentarContaCorrente(WebApplication app)
+    {
+        app.MapPost("/v1/movimentacoes", async (
+            ClaimsPrincipal user,
+            [FromHeader(Name = "Idempotency-Key")] string identificacaoRequisicao,
+            MovimentarContaCorrenteRequest request,
+            [FromServices] ISender sender,
+            CancellationToken cancellationToken) =>
+                {
+                    var idContaCorrente = user.FindFirstValue(ClaimTypes.NameIdentifier);
+                    if (!Guid.TryParse(idContaCorrente, out var contaCorrenteId))
+                        return Results.StatusCode(StatusCodes.Status403Forbidden);
+
+                    var response = await sender.Send(
+                        new MovimentarContaCorrenteCommand(
+                            contaCorrenteId,
+                            identificacaoRequisicao,
+                            request.NumeroConta,
+                            request.Valor,
+                            request.TipoMovimento),
+                        cancellationToken
+                    );
+
+                    if (!response.Success)
+                        return Results.BadRequest(new FalhaResponse(response.TipoFalha!, response.Mensagem!));
+
+                    return Results.NoContent();
+                })
+        .RequireIdempotency()
+        .WithName("MovimentarContaCorrente")
+        .WithSummary("Efetua uma movimentação em conta corrente.")
+        .WithDescription("Recebe a identificação da requisição no cabeçalho Idempotency-Key, o número opcional da conta corrente, o valor e o tipo do movimento. Caso o número da conta não seja informado, utiliza a conta identificada no token JWT.")
+        .Produces(StatusCodes.Status204NoContent)
+        .Produces<FalhaResponse>(StatusCodes.Status400BadRequest)
+        .Produces<FalhaResponse>(StatusCodes.Status409Conflict)
         .Produces(StatusCodes.Status403Forbidden)
         .RequireAuthorization();
     }

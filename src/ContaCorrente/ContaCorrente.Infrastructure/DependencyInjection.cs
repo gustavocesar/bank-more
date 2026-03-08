@@ -13,6 +13,7 @@ public static class DependencyInjection
         services.AddScoped<DbInitializer>();
         services.AddSingleton<SqliteConnectionFactory>();
         services.AddScoped<IContaCorrenteRepository, ContaCorrenteRepository>();
+        services.AddScoped<IMovimentoRepository, MovimentoRepository>();
         services.AddScoped<IIdempotencyRepository, IdempotencyRepository>();
 
         return services;

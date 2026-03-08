@@ -27,11 +27,12 @@ internal sealed class ContaCorrenteService(HttpClient httpClient) : IContaCorren
         decimal valor,
         CancellationToken cancellationToken) =>
         PostAsync(
-            "/internal/movimentacoes/debito",
+            "/v1/movimentacoes",
             token,
-            identificacaoRequisicao,
-            new DebitoContaCorrenteRequest(valor),
-            cancellationToken);
+            BuildOperationIdempotencyKey(identificacaoRequisicao, "debito"),
+            new MovimentacaoContaCorrenteRequest(null, valor, "D"),
+            cancellationToken
+        );
 
     public Task<ContaCorrenteOperationResult> CreditAsync(
         string token,
@@ -40,11 +41,12 @@ internal sealed class ContaCorrenteService(HttpClient httpClient) : IContaCorren
         decimal valor,
         CancellationToken cancellationToken) =>
         PostAsync(
-            "/internal/movimentacoes/credito",
+            "/v1/movimentacoes",
             token,
-            identificacaoRequisicao,
-            new CreditoContaCorrenteRequest(numeroContaDestino, valor),
-            cancellationToken);
+            BuildOperationIdempotencyKey(identificacaoRequisicao, "credito"),
+            new MovimentacaoContaCorrenteRequest(numeroContaDestino, valor, "C"),
+            cancellationToken
+        );
 
     public Task<ContaCorrenteOperationResult> ReverseAsync(
         string token,
@@ -52,11 +54,12 @@ internal sealed class ContaCorrenteService(HttpClient httpClient) : IContaCorren
         decimal valor,
         CancellationToken cancellationToken) =>
         PostAsync(
-            "/internal/movimentacoes/estorno",
+            "/v1/movimentacoes",
             token,
-            identificacaoRequisicao,
-            new EstornoContaCorrenteRequest(valor),
-            cancellationToken);
+            BuildOperationIdempotencyKey(identificacaoRequisicao, "estorno"),
+            new MovimentacaoContaCorrenteRequest(null, valor, "C"),
+            cancellationToken
+        );
 
     private async Task<ContaCorrenteInfo?> GetAsync(
         string route,
@@ -89,9 +92,11 @@ internal sealed class ContaCorrenteService(HttpClient httpClient) : IContaCorren
             return ContaCorrenteOperationResult.Succeeded();
 
         var falha = await response.Content.ReadFromJsonAsync<FalhaContaCorrenteResponse>(JsonOptions, cancellationToken);
+        
         return ContaCorrenteOperationResult.Failed(
             falha?.TipoFalha ?? "REQUEST_FAILURE",
-            falha?.Mensagem ?? "Falha ao processar a requisicao na API Conta Corrente.");
+            falha?.Mensagem ?? "Falha ao processar a requisicao na API Conta Corrente."
+        );
     }
 
     private static HttpRequestMessage CreateRequest(
@@ -109,8 +114,9 @@ internal sealed class ContaCorrenteService(HttpClient httpClient) : IContaCorren
         return request;
     }
 
+    private static string BuildOperationIdempotencyKey(string identificacaoRequisicao, string operacao) =>
+        $"{identificacaoRequisicao}:{operacao}";
+
     private sealed record FalhaContaCorrenteResponse(string TipoFalha, string Mensagem);
-    private sealed record DebitoContaCorrenteRequest(decimal Valor);
-    private sealed record CreditoContaCorrenteRequest(int NumeroContaDestino, decimal Valor);
-    private sealed record EstornoContaCorrenteRequest(decimal Valor);
+    private sealed record MovimentacaoContaCorrenteRequest(int? NumeroConta, decimal Valor, string TipoMovimento);
 }
