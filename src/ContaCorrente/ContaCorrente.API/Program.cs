@@ -1,6 +1,6 @@
 using ContaCorrente.API.Authentication;
 using ContaCorrente.API.Endpoints;
-using ContaCorrente.API.Idempotencia;
+using ContaCorrente.API.Idempotency;
 using ContaCorrente.Application;
 using ContaCorrente.Infrastructure;
 using ContaCorrente.Infrastructure.Persistence;

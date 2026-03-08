@@ -6,7 +6,7 @@ using ContaCorrente.API.Contracts;
 using Microsoft.Extensions.Primitives;
 using SharedKernel.Idempotency;
 
-namespace ContaCorrente.API.Idempotencia;
+namespace ContaCorrente.API.Idempotency;
 
 internal sealed class IdempotencyMiddleware(RequestDelegate next)
 {

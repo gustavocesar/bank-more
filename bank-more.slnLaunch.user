@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "src\\ContaCorrente\\ContaCorrente.API\\ContaCorrente.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\Transferencia\\Transferencia.API\\Transferencia.API.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

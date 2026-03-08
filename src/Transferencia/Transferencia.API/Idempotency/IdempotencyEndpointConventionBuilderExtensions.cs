@@ -1,6 +1,6 @@
 using SharedKernel.Idempotency;
 
-namespace ContaCorrente.API.Idempotencia;
+namespace Transferencia.API.Idempotency;
 
 internal static class IdempotencyEndpointConventionBuilderExtensions
 {

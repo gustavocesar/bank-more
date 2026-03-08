@@ -1,6 +1,6 @@
 ﻿using ContaCorrente.API.Authentication;
 using ContaCorrente.API.Contracts;
-using ContaCorrente.API.Idempotencia;
+using ContaCorrente.API.Idempotency;
 using ContaCorrente.Application.Commands.EfetuarLogin;
 using MediatR;
 
