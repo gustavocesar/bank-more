@@ -25,7 +25,9 @@ internal sealed class ContaCorrenteRepository(SqliteConnectionFactory connection
             new CommandDefinition(
                 sql,
                 new { Cpf = cpf.Value },
-                cancellationToken: cancellationToken));
+                cancellationToken: cancellationToken
+            )
+        );
     }
 
     public async Task<int?> GetLastNumberAsync(CancellationToken cancellationToken)
@@ -36,7 +38,9 @@ internal sealed class ContaCorrenteRepository(SqliteConnectionFactory connection
         return await connection.ExecuteScalarAsync<int?>(
             new CommandDefinition(
                 "SELECT MAX(numero) FROM contacorrente;",
-                cancellationToken: cancellationToken));
+                cancellationToken: cancellationToken
+            )
+        );
     }
 
     public async Task CreateAsync(ContaCorrenteEntity contaCorrente, CancellationToken cancellationToken)
@@ -62,7 +66,9 @@ internal sealed class ContaCorrenteRepository(SqliteConnectionFactory connection
                     Senha = contaCorrente.Senha.Hash,
                     Salt = contaCorrente.Senha.Salt,
                 },
-                cancellationToken: cancellationToken));
+                cancellationToken: cancellationToken
+            )
+        );
     }
 
     public async Task<ContaCorrenteEntity?> GetByNumeroOrCpfAsync(string identificador, CancellationToken cancellationToken)
@@ -87,7 +93,9 @@ internal sealed class ContaCorrenteRepository(SqliteConnectionFactory connection
             new CommandDefinition(
                 sql,
                 new { Identificador = identificador.OnlyNumbers() },
-                cancellationToken: cancellationToken));
+                cancellationToken: cancellationToken
+            )
+        );
 
         return Map(data);
     }
@@ -114,7 +122,9 @@ internal sealed class ContaCorrenteRepository(SqliteConnectionFactory connection
             new CommandDefinition(
                 sql,
                 new { IdContaCorrente = idContaCorrente },
-                cancellationToken: cancellationToken));
+                cancellationToken: cancellationToken
+            )
+        );
 
         return Map(data);
     }
@@ -134,7 +144,9 @@ internal sealed class ContaCorrenteRepository(SqliteConnectionFactory connection
             new CommandDefinition(
                 sql,
                 new { IdContaCorrente = idContaCorrente },
-                cancellationToken: cancellationToken));
+                cancellationToken: cancellationToken
+            )
+        );
     }
 
     private static ContaCorrenteEntity? Map(ContaCorrenteData? data)

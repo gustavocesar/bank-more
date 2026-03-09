@@ -28,6 +28,32 @@ internal sealed class MovimentoRepository(SqliteConnectionFactory connectionFact
                     TipoMovimento = movimento.TipoMovimento.ToString(),
                     movimento.Valor,
                 },
-                cancellationToken: cancellationToken));
+                cancellationToken: cancellationToken
+            )
+        );
+    }
+
+    public async Task<decimal> GetSaldoAsync(Guid idContaCorrente, CancellationToken cancellationToken)
+    {
+        await using var connection = connectionFactory.Create();
+        await connection.OpenAsync(cancellationToken);
+
+        const string sql = """
+                           SELECT COALESCE(SUM(CASE tipomovimento
+                               WHEN 'C' THEN valor
+                               WHEN 'D' THEN -valor
+                               ELSE 0
+                           END), 0)
+                           FROM movimento
+                           WHERE idcontacorrente = @IdContaCorrente;
+                           """;
+
+        return await connection.ExecuteScalarAsync<decimal>(
+            new CommandDefinition(
+                sql,
+                new { IdContaCorrente = idContaCorrente },
+                cancellationToken: cancellationToken
+            )
+        );
     }
 }

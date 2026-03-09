@@ -6,6 +6,7 @@ using ContaCorrente.Application.Commands.InativarContaCorrente;
 using ContaCorrente.Application.Commands.MovimentarContaCorrente;
 using ContaCorrente.Application.Queries.ObterContaCorrentePorId;
 using ContaCorrente.Application.Queries.ObterContaCorrentePorNumero;
+using ContaCorrente.Application.Queries.ObterSaldoContaCorrente;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,6 +19,7 @@ internal static class ContaCorrenteEndpoints
         CriarContaCorrente(app);
         ObterContaCorrentePorId(app);
         ObterContaCorrentePorNumero(app);
+        ObterSaldoContaCorrente(app);
         MovimentarContaCorrente(app);
         InativarContaCorrente(app);
     }
@@ -116,6 +118,41 @@ internal static class ContaCorrenteEndpoints
         .Produces<ObterContaCorrenteHttpResponse>(StatusCodes.Status200OK)
         .Produces<FalhaResponse>(StatusCodes.Status400BadRequest)
         .Produces<FalhaResponse>(StatusCodes.Status404NotFound)
+        .Produces(StatusCodes.Status403Forbidden)
+        .RequireAuthorization();
+    }
+
+    private static void ObterSaldoContaCorrente(WebApplication app)
+    {
+        app.MapGet("/v1/saldo", async (
+            ClaimsPrincipal user,
+            ISender sender,
+            CancellationToken cancellationToken) =>
+                {
+                    var idContaCorrente = user.FindFirstValue(ClaimTypes.NameIdentifier);
+                    if (!Guid.TryParse(idContaCorrente, out var contaCorrenteId))
+                        return Results.StatusCode(StatusCodes.Status403Forbidden);
+
+                    var response = await sender.Send(
+                        new ObterSaldoContaCorrenteQuery(contaCorrenteId),
+                        cancellationToken
+                    );
+
+                    if (!response.Success)
+                        return Results.BadRequest(new FalhaResponse(response.TipoFalha!, response.Mensagem!));
+
+                    return Results.Ok(new ObterSaldoContaCorrenteHttpResponse(
+                        response.NumeroConta!.Value,
+                        response.NomeTitular!,
+                        response.DataHoraConsulta!.Value,
+                        response.Saldo!.Value
+                    ));
+                })
+        .WithName("ObterSaldoContaCorrente")
+        .WithSummary("Obtém o saldo atual da conta corrente autenticada.")
+        .WithDescription("Recebe o token JWT no cabeçalho Authorization, valida a conta autenticada e retorna o saldo atual calculado pela soma dos créditos menos a soma dos débitos.")
+        .Produces<ObterSaldoContaCorrenteHttpResponse>(StatusCodes.Status200OK)
+        .Produces<FalhaResponse>(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status403Forbidden)
         .RequireAuthorization();
     }

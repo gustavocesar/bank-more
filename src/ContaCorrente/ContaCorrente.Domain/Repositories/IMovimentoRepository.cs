@@ -5,4 +5,5 @@ namespace ContaCorrente.Domain.Repositories;
 public interface IMovimentoRepository
 {
     Task CreateAsync(MovimentoEntity movimento, CancellationToken cancellationToken);
+    Task<decimal> GetSaldoAsync(Guid idContaCorrente, CancellationToken cancellationToken);
 }

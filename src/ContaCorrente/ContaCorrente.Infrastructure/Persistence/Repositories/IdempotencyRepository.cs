@@ -23,7 +23,9 @@ internal sealed class IdempotencyRepository(SqliteConnectionFactory connectionFa
             new CommandDefinition(
                 sql,
                 new { Key = key },
-                cancellationToken: cancellationToken));
+                cancellationToken: cancellationToken
+            )
+        );
 
         return data is null ? null : new IdempotencyEntry(data.Key, data.Request, data.Result);
     }
@@ -46,7 +48,9 @@ internal sealed class IdempotencyRepository(SqliteConnectionFactory connectionFa
                     Key = key,
                     Request = request,
                 },
-                cancellationToken: cancellationToken));
+                cancellationToken: cancellationToken
+            )
+        );
 
         return rowsAffected > 0;
     }
@@ -70,7 +74,9 @@ internal sealed class IdempotencyRepository(SqliteConnectionFactory connectionFa
                     Key = key,
                     Result = result,
                 },
-                cancellationToken: cancellationToken));
+                cancellationToken: cancellationToken
+            )
+        );
     }
 
     public async Task RemoveAsync(string key, CancellationToken cancellationToken)
@@ -82,7 +88,9 @@ internal sealed class IdempotencyRepository(SqliteConnectionFactory connectionFa
             new CommandDefinition(
                 "DELETE FROM idempotencia WHERE chave_idempotencia = @Key;",
                 new { Key = key },
-                cancellationToken: cancellationToken));
+                cancellationToken: cancellationToken
+            )
+        );
     }
 
     private sealed record IdempotencyData(string Key, string Request, string? Result);
