@@ -1,7 +1,6 @@
-namespace Transferencia.Application.Events;
+namespace Tarifas.Subscriber.Contracts;
 
-public sealed record TransferenciaRealizadaEvent(
-    string IdentificacaoRequisicao,
+internal sealed record TransferenciaRealizadaMessage(
     Guid IdTransferencia,
     Guid IdContaCorrenteOrigem,
     Guid IdContaCorrenteDestino,

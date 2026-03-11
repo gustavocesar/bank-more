@@ -9,6 +9,10 @@
       {
         "Path": "src\\Transferencia\\Transferencia.API\\Transferencia.API.csproj",
         "Action": "Start"
+      },
+      {
+        "Path": "src\\Tarifas\\Tarifas.Subscriber\\Tarifas.Subscriber.csproj",
+        "Action": "Start"
       }
     ]
   }

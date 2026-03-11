@@ -15,7 +15,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Tarifas.API\Tarifas.API.csproj" />
     <ProjectReference Include="..\Tarifas.Application\Tarifas.Application.csproj" />
     <ProjectReference Include="..\Tarifas.Domain\Tarifas.Domain.csproj" />
     <ProjectReference Include="..\Tarifas.Infrastructure\Tarifas.Infrastructure.csproj" />

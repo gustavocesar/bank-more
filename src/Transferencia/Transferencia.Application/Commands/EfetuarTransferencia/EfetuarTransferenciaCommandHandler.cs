@@ -34,7 +34,7 @@ internal sealed class EfetuarTransferenciaCommandHandler(
             return movimentacaoResult;
 
         var transferencia = await PersistirTransferenciaAsync(request, contaDestinoResult.ContaDestino!, cancellationToken);
-        await PublicarEventoAsync(transferencia, cancellationToken);
+        //await PublicarEventoAsync(request, transferencia, cancellationToken);
 
         return EfetuarTransferenciaResponse.Sucesso();
     }
@@ -166,9 +166,10 @@ internal sealed class EfetuarTransferenciaCommandHandler(
         return transferencia;
     }
 
-    private Task PublicarEventoAsync(TransferenciaEntity transferencia, CancellationToken cancellationToken) =>
+    private Task PublicarEventoAsync(EfetuarTransferenciaCommand request, TransferenciaEntity transferencia, CancellationToken cancellationToken) =>
         eventPublisher.PublishAsync(
             new TransferenciaRealizadaEvent(
+                request.IdentificacaoRequisicao,
                 transferencia.Id,
                 transferencia.IdContaCorrenteOrigem,
                 transferencia.IdContaCorrenteDestino,
