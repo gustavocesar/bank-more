@@ -21,7 +21,7 @@ internal static class AuthenticationExtensions
         };
 
         if (string.IsNullOrWhiteSpace(jwtOptions.SigningKey))
-            throw new InvalidOperationException("A chave de assinatura do JWT n„o foi configurada.");
+            throw new InvalidOperationException("A chave de assinatura do JWT n√£o foi configurada.");
 
         services.AddSingleton(jwtOptions);
 

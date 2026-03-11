@@ -34,7 +34,7 @@ internal sealed class EfetuarTransferenciaCommandHandler(
             return movimentacaoResult;
 
         var transferencia = await PersistirTransferenciaAsync(request, contaDestinoResult.ContaDestino!, cancellationToken);
-        //await PublicarEventoAsync(request, transferencia, cancellationToken);
+        await PublicarEventoAsync(request, transferencia, cancellationToken);
 
         return EfetuarTransferenciaResponse.Sucesso();
     }

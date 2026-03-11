@@ -1,29 +1,99 @@
-version: '2'
+version: '3.8'
 services:
   zookeeper:
-    image: confluentinc/cp-zookeeper:latest
+    image: confluentinc/cp-zookeeper:7.5.3
     networks:
       - net
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_log:/var/lib/zookeeper/log
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
 
   kafka:
-    image: confluentinc/cp-kafka:latest
+    image: confluentinc/cp-kafka:7.5.3
+    hostname: kafka
     networks:
-      - net
+      net:
+        aliases:
+          - kafka
     depends_on:
       - zookeeper
     ports:
       - 9092:9092
+    volumes:
+      - kafka_data:/var/lib/kafka/data
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
+  contacorrente-api:
+    build:
+      context: .
+      dockerfile: src/ContaCorrente/ContaCorrente.API/Dockerfile
+    networks:
+      - net
+    depends_on:
+      - kafka
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: Data Source=/app/data/contacorrente.db
+    ports:
+      - 5034:8080
+    volumes:
+      - contacorrente_data:/app/data
+
+  transferencia-api:
+    build:
+      context: .
+      dockerfile: src/Transferencia/Transferencia.API/Dockerfile
+    networks:
+      - net
+    depends_on:
+      - kafka
+      - contacorrente-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: Data Source=/app/data/transferencia.db
+      ContaCorrenteApi__BaseUrl: http://contacorrente-api:8080
+      Kafka__BootstrapServers: kafka:29092
+    ports:
+      - 5009:8080
+    volumes:
+      - transferencia_data:/app/data
+
+  tarifas-subscriber:
+    build:
+      context: .
+      dockerfile: src/Tarifas/Tarifas.Subscriber/Dockerfile
+    networks:
+      - net
+    depends_on:
+      - kafka
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      ConnectionStrings__Default: Data Source=/app/data/tarifas.db
+      Kafka__BootstrapServers: kafka:29092
+    restart: unless-stopped
+    volumes:
+      - tarifas_data:/app/data
+
 networks:
   net:
     driver: bridge
+
+volumes:
+  zookeeper_data:
+  zookeeper_log:
+  kafka_data:
+  contacorrente_data:
+  transferencia_data:
+  tarifas_data:
