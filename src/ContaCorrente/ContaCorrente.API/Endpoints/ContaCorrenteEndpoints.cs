@@ -2,6 +2,7 @@ using System.Security.Claims;
 using ContaCorrente.API.Contracts;
 using ContaCorrente.API.Idempotency;
 using ContaCorrente.Application.Commands.CriarContaCorrente;
+using ContaCorrente.Application.Commands.DepositarContaCorrente;
 using ContaCorrente.Application.Commands.InativarContaCorrente;
 using ContaCorrente.Application.Commands.MovimentarContaCorrente;
 using ContaCorrente.Application.Queries.ObterContaCorrentePorId;
@@ -20,6 +21,7 @@ internal static class ContaCorrenteEndpoints
         ObterContaCorrentePorId(app);
         ObterContaCorrentePorNumero(app);
         ObterSaldoContaCorrente(app);
+        DepositarContaCorrente(app);
         MovimentarContaCorrente(app);
         InativarContaCorrente(app);
     }
@@ -189,6 +191,44 @@ internal static class ContaCorrenteEndpoints
         .WithName("MovimentarContaCorrente")
         .WithSummary("Efetua uma movimentação em conta corrente.")
         .WithDescription("Recebe a identificação da requisição no cabeçalho Idempotency-Key, o número opcional da conta corrente, o valor e o tipo do movimento. Caso o número da conta não seja informado, utiliza a conta identificada no token JWT.")
+        .Produces(StatusCodes.Status204NoContent)
+        .Produces<FalhaResponse>(StatusCodes.Status400BadRequest)
+        .Produces<FalhaResponse>(StatusCodes.Status409Conflict)
+        .Produces(StatusCodes.Status403Forbidden)
+        .RequireAuthorization();
+    }
+
+    private static void DepositarContaCorrente(WebApplication app)
+    {
+        app.MapPost("/v1/movimentacoes/depositos", async (
+            ClaimsPrincipal user,
+            [FromHeader(Name = "Idempotency-Key")] string identificacaoRequisicao,
+            DepositarContaCorrenteRequest request,
+            [FromServices] ISender sender,
+            CancellationToken cancellationToken) =>
+                {
+                    var idContaCorrente = user.FindFirstValue(ClaimTypes.NameIdentifier);
+                    if (!Guid.TryParse(idContaCorrente, out var contaCorrenteId))
+                        return Results.StatusCode(StatusCodes.Status403Forbidden);
+
+                    var response = await sender.Send(
+                        new DepositarContaCorrenteCommand(
+                            contaCorrenteId,
+                            identificacaoRequisicao,
+                            request.NumeroConta,
+                            request.Valor),
+                        cancellationToken
+                    );
+
+                    if (!response.Success)
+                        return Results.BadRequest(new FalhaResponse(response.TipoFalha!, response.Mensagem!));
+
+                    return Results.NoContent();
+                })
+        .RequireIdempotency()
+        .WithName("DepositarContaCorrente")
+        .WithSummary("Efetua um depósito em conta corrente.")
+        .WithDescription("Recebe a identificação da requisição no cabeçalho Idempotency-Key, o número opcional da conta corrente e o valor do depósito. Caso o número da conta não seja informado, utiliza a conta identificada no token JWT.")
         .Produces(StatusCodes.Status204NoContent)
         .Produces<FalhaResponse>(StatusCodes.Status400BadRequest)
         .Produces<FalhaResponse>(StatusCodes.Status409Conflict)

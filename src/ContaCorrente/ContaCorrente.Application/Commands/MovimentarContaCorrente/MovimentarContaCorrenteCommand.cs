@@ -26,4 +26,10 @@ public sealed record MovimentarContaCorrenteResponse(bool Success, string? TipoF
 
     public static MovimentarContaCorrenteResponse TipoInvalido(string mensagem) =>
         new(false, "INVALID_TYPE", mensagem);
+
+    public static MovimentarContaCorrenteResponse MesmaConta(string mensagem) =>
+        new(false, "SAME_ACCOUNT", mensagem);
+
+    public static MovimentarContaCorrenteResponse SaldoInsuficiente(string mensagem) =>
+        new(false, "INSUFFICIENT_FUNDS", mensagem);
 }

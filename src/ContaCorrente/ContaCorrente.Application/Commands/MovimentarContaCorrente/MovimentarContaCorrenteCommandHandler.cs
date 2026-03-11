@@ -30,10 +30,17 @@ internal sealed class MovimentarContaCorrenteCommandHandler(
         if (!contaCorrente.Ativo)
             return MovimentarContaCorrenteResponse.ContaInativa("A conta corrente informada está inativa.");
 
+        if (request.NumeroConta.HasValue && contaCorrente.Id == request.IdContaCorrenteAutenticada)
+            return MovimentarContaCorrenteResponse.MesmaConta("A conta de destino deve ser diferente da conta autenticada.");
+
         if (contaCorrente.Id != request.IdContaCorrenteAutenticada && request.TipoMovimento != TipoMovimento.C)
+            return MovimentarContaCorrenteResponse.TipoInvalido("Apenas o tipo 'C' pode ser aceito quando a conta informada for diferente do usuário autenticado.");
+
+        if (request.TipoMovimento is TipoMovimento.D)
         {
-            return MovimentarContaCorrenteResponse.TipoInvalido(
-                "Apenas o tipo 'C' pode ser aceito quando a conta informada for diferente do usuário autenticado.");
+            var saldoAtual = await movimentoRepository.GetSaldoAsync(contaCorrente.Id, cancellationToken);
+            if (saldoAtual < request.Valor)
+                return MovimentarContaCorrenteResponse.SaldoInsuficiente("Saldo insuficiente para realizar a movimentação.");
         }
 
         var movimento = MovimentoEntity.Criar(contaCorrente.Id, request.TipoMovimento, request.Valor);

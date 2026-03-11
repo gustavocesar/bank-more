@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS contacorrente (
-	idcontacorrente TEXT(37) PRIMARY KEY, -- id da conta corrente
+	idcontacorrente TEXT(37) PRIMARY KEY COLLATE NOCASE, -- id da conta corrente
 	numero INTEGER(10) NOT NULL UNIQUE, -- numero da conta corrente
 	cpf TEXT(11) NOT NULL UNIQUE, -- cpf do titular da conta corrente
 	nome TEXT(100) NOT NULL, -- nome do titular da conta corrente
@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS contacorrente (
 );
 
 CREATE TABLE IF NOT EXISTS movimento (
-	idmovimento TEXT(37) PRIMARY KEY, -- identificacao unica do movimento
+	idmovimento TEXT(37) PRIMARY KEY COLLATE NOCASE, -- identificacao unica do movimento
 	idcontacorrente TEXT(37) NOT NULL, -- identificacao unica da conta corrente
 	datamovimento TEXT(25) NOT NULL, -- data do movimento no formato DD/MM/YYYY
 	tipomovimento TEXT(1) NOT NULL, -- tipo do movimento. (C = Credito, D = Debito).
@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS movimento (
 );
 
 CREATE TABLE IF NOT EXISTS idempotencia (
-	chave_idempotencia TEXT(37) PRIMARY KEY, -- identificacao chave de idempotencia
+	chave_idempotencia TEXT(37) PRIMARY KEY COLLATE NOCASE, -- identificacao chave de idempotencia
 	requisicao TEXT(1000), -- dados de requisicao
 	resultado TEXT(1000) -- dados de retorno
 );

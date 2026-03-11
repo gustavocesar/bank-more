@@ -85,6 +85,26 @@ public sealed class MovimentarContaCorrenteCommandHandlerTests
     }
 
     [Fact]
+    public async Task Handler_DeveRetornarMesmaConta_QuandoContaInformadaForIgualAContaAutenticada()
+    {
+        var conta = CriarConta();
+        var contaRepository = new FakeContaCorrenteRepository
+        {
+            ContaByNumeroOrCpfResult = conta
+        };
+        var movimentoRepository = new FakeMovimentoRepository();
+        var handler = new MovimentarContaCorrenteCommandHandler(contaRepository, movimentoRepository);
+
+        var response = await handler.Handle(
+            new MovimentarContaCorrenteCommand(conta.Id, "req-1", conta.NumeroConta.Value, 10m, TipoMovimento.C),
+            CancellationToken.None);
+
+        Assert.False(response.Success);
+        Assert.Equal("SAME_ACCOUNT", response.TipoFalha);
+        Assert.Equal(0, movimentoRepository.CreateAsyncCalls);
+    }
+
+    [Fact]
     public async Task Handler_DeveRetornarTipoInvalido_QuandoContaInformadaForDiferenteEOperacaoNaoForCredito()
     {
         var contaDestino = CriarConta(numero: 100002);
@@ -105,6 +125,30 @@ public sealed class MovimentarContaCorrenteCommandHandlerTests
     }
 
     [Fact]
+    public async Task Handler_DeveRetornarSaldoInsuficiente_QuandoDebitoNaoTiverSaldoDisponivel()
+    {
+        var conta = CriarConta();
+        var contaRepository = new FakeContaCorrenteRepository
+        {
+            ContaByIdResult = conta
+        };
+        var movimentoRepository = new FakeMovimentoRepository
+        {
+            SaldoResult = 20m
+        };
+        var handler = new MovimentarContaCorrenteCommandHandler(contaRepository, movimentoRepository);
+
+        var response = await handler.Handle(
+            new MovimentarContaCorrenteCommand(conta.Id, "req-1", null, 25.50m, TipoMovimento.D),
+            CancellationToken.None);
+
+        Assert.False(response.Success);
+        Assert.Equal("INSUFFICIENT_FUNDS", response.TipoFalha);
+        Assert.Equal(1, movimentoRepository.GetSaldoAsyncCalls);
+        Assert.Equal(0, movimentoRepository.CreateAsyncCalls);
+    }
+
+    [Fact]
     public async Task Handler_DevePersistirMovimento_QuandoContaAutenticadaForMovimentada()
     {
         var conta = CriarConta();
@@ -112,7 +156,10 @@ public sealed class MovimentarContaCorrenteCommandHandlerTests
         {
             ContaByIdResult = conta
         };
-        var movimentoRepository = new FakeMovimentoRepository();
+        var movimentoRepository = new FakeMovimentoRepository
+        {
+            SaldoResult = 100m
+        };
         var handler = new MovimentarContaCorrenteCommandHandler(contaRepository, movimentoRepository);
 
         var response = await handler.Handle(

@@ -39,11 +39,14 @@ internal sealed class MovimentoRepository(SqliteConnectionFactory connectionFact
         await connection.OpenAsync(cancellationToken);
 
         const string sql = """
-                           SELECT COALESCE(SUM(CASE tipomovimento
-                               WHEN 'C' THEN valor
-                               WHEN 'D' THEN -valor
-                               ELSE 0
-                           END), 0)
+                           SELECT ROUND(
+                               COALESCE(SUM(CASE tipomovimento
+                                   WHEN 'C' THEN CAST(ROUND(valor * 100, 0) AS INTEGER)
+                                   WHEN 'D' THEN -CAST(ROUND(valor * 100, 0) AS INTEGER)
+                                   ELSE 0
+                               END), 0) / 100.0,
+                               2
+                           )
                            FROM movimento
                            WHERE idcontacorrente = @IdContaCorrente;
                            """;

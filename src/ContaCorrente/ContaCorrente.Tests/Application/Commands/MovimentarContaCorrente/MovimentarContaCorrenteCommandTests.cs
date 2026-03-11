@@ -73,4 +73,14 @@ public sealed class MovimentarContaCorrenteCommandTests
         Assert.Equal("INVALID_TYPE", response.TipoFalha);
         Assert.Equal("tipo inválido", response.Mensagem);
     }
+
+    [Fact]
+    public void Response_SaldoInsuficiente_DeveRetornarFalhaEsperada()
+    {
+        var response = MovimentarContaCorrenteResponse.SaldoInsuficiente("saldo insuficiente");
+
+        Assert.False(response.Success);
+        Assert.Equal("INSUFFICIENT_FUNDS", response.TipoFalha);
+        Assert.Equal("saldo insuficiente", response.Mensagem);
+    }
 }

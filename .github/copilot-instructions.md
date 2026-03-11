@@ -80,7 +80,7 @@ Utilizar:
 * Interfaces de Repositórios
 * ValueObjects
 
-Evitar lógica de negócio em Controllers ou Repositories.
+Evitar lógica de negócio em endpoints ou repositories.
 
 ---
 
@@ -132,7 +132,7 @@ internal sealed class MovimentarContaHandler
     : IRequestHandler<MovimentarContaCommand>
 ```
 
-Controllers devem apenas encaminhar requests para o MediatR.
+Endpoints devem apenas encaminhar requests para o MediatR.
 
 ---
 
@@ -142,7 +142,6 @@ Por padrão, utilizar **internal** para classes.
 
 Somente devem ser **public**:
 
-* Controllers
 * DTOs expostos na API
 
 Exemplo:
@@ -151,6 +150,27 @@ Exemplo:
 internal class ContaCorrente
 internal class MovimentarContaHandler
 ```
+
+---
+
+# API
+
+A camada de API deve utilizar **Minimal APIs**.
+
+Preferir:
+
+* mapeamento de rotas em classes estáticas de endpoints
+* uso de `MapGet`, `MapPost`, `MapPut`, `MapDelete`
+* contratos de request/response específicos da API
+* endpoints finos, sem lógica de negócio
+
+Evitar:
+
+* Controllers
+* actions MVC
+* lógica de negócio dentro dos endpoints
+
+Os endpoints devem apenas receber a requisição HTTP, extrair dados de contexto necessários, encaminhar comandos/queries para o MediatR e retornar o resultado apropriado.
 
 ---
 
@@ -272,7 +292,6 @@ Infrastructure
 API
  ├ Endpoints
  ├ Contracts
- ├ Endpoints
  └ Middlewares
 ```
 
@@ -303,5 +322,3 @@ Demonstrar:
 * comunicação assíncrona via eventos
 * APIs seguras
 * código organizado e testável
-
-```
