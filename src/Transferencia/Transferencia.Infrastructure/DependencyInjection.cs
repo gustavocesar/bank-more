@@ -5,8 +5,10 @@ using Polly;
 using Polly.Extensions.Http;
 using Polly.Retry;
 using SharedKernel.Idempotency;
+using SharedKernel.Messaging;
 using Transferencia.Domain.Repositories;
 using Transferencia.Domain.Services;
+using Transferencia.Infrastructure.Messaging;
 using Transferencia.Infrastructure.Persistence;
 using Transferencia.Infrastructure.Persistence.Repositories;
 using Transferencia.Infrastructure.Services;
@@ -21,6 +23,7 @@ public static class DependencyInjection
         services.AddSingleton<SqliteConnectionFactory>();
         services.AddScoped<ITransferenciaRepository, TransferenciaRepository>();
         services.AddScoped<IIdempotencyRepository, IdempotencyRepository>();
+        services.AddSingleton<IEventPublisher, KafkaEventPublisher>();
 
         var contaCorrenteApiOptions = new ContaCorrenteApiOptions
         {

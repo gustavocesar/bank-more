@@ -1,4 +1,6 @@
 using MediatR;
+using SharedKernel.Messaging;
+using Transferencia.Application.Events;
 using Transferencia.Domain.Repositories;
 using Transferencia.Domain.Services;
 using TransferenciaEntity = Transferencia.Domain.Entities.Transferencia;
@@ -7,7 +9,8 @@ namespace Transferencia.Application.Commands.EfetuarTransferencia;
 
 internal sealed class EfetuarTransferenciaCommandHandler(
     ITransferenciaRepository transferenciaRepository,
-    IContaCorrenteService contaCorrenteService)
+    IContaCorrenteService contaCorrenteService,
+    IEventPublisher eventPublisher)
     : IRequestHandler<EfetuarTransferenciaCommand, EfetuarTransferenciaResponse>
 {
     public async Task<EfetuarTransferenciaResponse> Handle(
@@ -30,7 +33,8 @@ internal sealed class EfetuarTransferenciaCommandHandler(
         if (movimentacaoResult is not null)
             return movimentacaoResult;
 
-        await PersistirTransferenciaAsync(request, contaDestinoResult.ContaDestino!, cancellationToken);
+        var transferencia = await PersistirTransferenciaAsync(request, contaDestinoResult.ContaDestino!, cancellationToken);
+        await PublicarEventoAsync(transferencia, cancellationToken);
 
         return EfetuarTransferenciaResponse.Sucesso();
     }
@@ -146,7 +150,7 @@ internal sealed class EfetuarTransferenciaCommandHandler(
         return CriarFalha(credito);
     }
 
-    private async Task PersistirTransferenciaAsync(
+    private async Task<TransferenciaEntity> PersistirTransferenciaAsync(
         EfetuarTransferenciaCommand request,
         ContaCorrenteInfo contaDestino,
         CancellationToken cancellationToken)
@@ -158,7 +162,21 @@ internal sealed class EfetuarTransferenciaCommandHandler(
         );
 
         await transferenciaRepository.CreateAsync(transferencia, cancellationToken);
+
+        return transferencia;
     }
+
+    private Task PublicarEventoAsync(TransferenciaEntity transferencia, CancellationToken cancellationToken) =>
+        eventPublisher.PublishAsync(
+            new TransferenciaRealizadaEvent(
+                transferencia.Id,
+                transferencia.IdContaCorrenteOrigem,
+                transferencia.IdContaCorrenteDestino,
+                transferencia.Valor,
+                transferencia.DataMovimento
+            ),
+            cancellationToken
+        );
 
     private static EfetuarTransferenciaResponse CriarFalha(ContaCorrenteOperationResult operacao) =>
         EfetuarTransferenciaResponse.FalhaRequisicao(operacao.TipoFalha!, operacao.Mensagem!);
